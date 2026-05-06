@@ -1,0 +1,8 @@
+{
+  "name": "Outfit Aura",
+  "description": "Start your day with your own style. Architectural wardrobe management and intent-driven outfit planning.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": []
+}

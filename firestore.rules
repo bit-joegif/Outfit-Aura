@@ -1,0 +1,90 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // User Profile
+    match /users/{userId} {
+      function isValidUser(data) {
+        return data.uid == userId && 
+               data.email is string && data.email.size() <= 256 &&
+               (data.preferredStyle == null || (data.preferredStyle is string && data.preferredStyle.size() <= 64));
+      }
+
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(incoming());
+      allow update: if isOwner(userId) && isValidUser(incoming()) && 
+                    incoming().diff(existing()).affectedKeys().hasOnly(['preferredStyle', 'displayName']);
+    }
+
+    // Clothing Items
+    match /clothingItems/{itemId} {
+      function isValidItem(data) {
+        return data.ownerId == request.auth.uid &&
+               data.name is string && data.name.size() <= 100 &&
+               data.category in ['Top', 'Bottom', 'Shoes', 'Outerwear', 'Accessory'] &&
+               data.imageUrl is string && data.imageUrl.size() <= 1024;
+      }
+
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isSignedIn() && isValidItem(incoming()) && isValidId(itemId);
+      allow update: if isSignedIn() && resource.data.ownerId == request.auth.uid && isValidItem(incoming());
+      allow delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+    }
+
+    // Outfits
+    match /outfits/{outfitId} {
+      function isValidOutfit(data) {
+        return data.ownerId == request.auth.uid &&
+               data.name is string && data.name.size() <= 100 &&
+               data.itemIds is list && data.itemIds.size() <= 20;
+      }
+
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isSignedIn() && isValidOutfit(incoming()) && isValidId(outfitId);
+      allow update: if isSignedIn() && resource.data.ownerId == request.auth.uid && isValidOutfit(incoming());
+      allow delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+    }
+
+    // Calendar
+    match /calendar/{eventId} {
+      function isValidEvent(data) {
+        return data.ownerId == request.auth.uid &&
+               data.date is string && data.date.size() == 10 && // YYYY-MM-DD
+               data.outfitId is string && data.outfitId.size() <= 128;
+      }
+
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isSignedIn() && isValidEvent(incoming()) && isValidId(eventId);
+      allow update: if isSignedIn() && resource.data.ownerId == request.auth.uid && isValidEvent(incoming());
+      allow delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+    }
+  }
+}

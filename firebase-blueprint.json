@@ -1,0 +1,78 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and settings",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "preferredStyle": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "ClothingItem": {
+      "title": "Clothing Item",
+      "description": "A single piece of clothing in the wardrobe",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "category": { "type": "string", "enum": ["Top", "Bottom", "Shoes", "Outerwear", "Accessory"] },
+        "subCategory": { "type": "string" },
+        "color": { "type": "string" },
+        "season": { "type": "string", "enum": ["Spring", "Summer", "Autumn", "Winter", "All"] },
+        "occasion": { "type": "string", "enum": ["Casual", "Formal", "Party", "Work", "Sport"] },
+        "imageUrl": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "category", "ownerId", "imageUrl"]
+    },
+    "Outfit": {
+      "title": "Outfit",
+      "description": "A combination of clothing items",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "itemIds": { "type": "array", "items": { "type": "string" } },
+        "occasion": { "type": "string", "enum": ["Casual", "Formal", "Party", "Work", "Sport"] },
+        "season": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "itemIds", "ownerId"]
+    },
+    "CalendarEvent": {
+      "title": "Calendar Event",
+      "description": "An outfit assigned to a specific date",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string", "format": "date" },
+        "outfitId": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["date", "outfitId", "ownerId"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "Users collection"
+    },
+    "clothingItems/{itemId}": {
+      "schema": "ClothingItem",
+      "description": "Individual clothing items"
+    },
+    "outfits/{outfitId}": {
+      "schema": "Outfit",
+      "description": "Created outfits"
+    },
+    "calendar/{eventId}": {
+      "schema": "CalendarEvent",
+      "description": "Daily outfit schedule"
+    }
+  }
+}
